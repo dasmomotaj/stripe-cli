@@ -1,4 +1,4 @@
-name: Sync OpenAPI Artifacts
+Stripe: Sync OpenAPI Artifacts
 
 on:
   workflow_dispatch:
