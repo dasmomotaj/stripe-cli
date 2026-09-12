@@ -190,6 +190,8 @@ func Execute(ctx context.Context) {
 		switch {
 		case errors.Is(err, errNotAuthenticated):
 			// whoami already printed output; just exit non-zero
+		case errors.Is(err, errCommandRemoved):
+			// the shim already printed the downgrade guidance; just exit non-zero
 		case requests.IsAPIKeyExpiredError(err):
 			fmt.Fprintln(os.Stderr, apiKeyExpiredMessage(projectNameFlag))
 		case isLoginRequiredError && projectNameFlag != "default":
@@ -315,16 +317,13 @@ func init() {
 	rootCmd.AddCommand(newListenCmd().cmd)
 	rootCmd.AddCommand(newLoginCmd().cmd)
 	rootCmd.AddCommand(newLogoutCmd().cmd)
-	rootCmd.AddCommand(newReauthCmd().cmd)
 	rootCmd.AddCommand(newLogsCmd(&Config).Cmd)
 	rootCmd.AddCommand(newOpenCmd().cmd)
+	rootCmd.AddCommand(newReauthCmd().cmd)
 	rootCmd.AddCommand(newResourcesCmd().cmd)
-	rootCmd.AddCommand(newSamplesCmd().cmd)
-	rootCmd.AddCommand(newServeCmd().cmd)
+	rootCmd.AddCommand(newSamplesCmd())
+	rootCmd.AddCommand(newServeCmd())
 	rootCmd.AddCommand(newSwitchCmd().cmd)
-	// current stripe status site is being deprecated
-	// hide status command until status site v2 is released
-	// rootCmd.AddCommand(newStatusCmd().cmd)
 	rootCmd.AddCommand(newTriggerCmd().cmd)
 	rootCmd.AddCommand(newVersionCmd().cmd)
 	rootCmd.AddCommand(newWhoamiCmd().cmd)
@@ -334,6 +333,9 @@ func init() {
 	rootCmd.AddCommand(newSandboxCmd().cmd)
 	rootCmd.AddCommand(newPluginCmd().cmd)
 	resources.AddAllResourcesCmds(rootCmd, &Config)
+	if terminalCmd, ok := cmdutil.FindSubCmd(rootCmd, "terminal"); ok {
+		terminalCmd.AddCommand(newTerminalQuickstartCmd())
+	}
 	registerHTTPCmds(rootCmd)
 	err := resource.AddDatabasesCmd(rootCmd, &Config)
 	if err != nil {
